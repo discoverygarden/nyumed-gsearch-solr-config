@@ -1,0 +1,84 @@
+<dataConfig>
+  <dataSource
+    type="JdbcDataSource"
+    driver="com.mysql.jdbc.Driver"
+    url="jdbc:mysql://localhost/archfac"
+    user="root"
+    password="x21A63dV"
+  />
+  <script><![CDATA[
+function mapFacultySubject(row) {
+  var isFaculty = row.get('IsFaculty');
+  if (isFaculty == '1') {
+    row.put('faculty_subject', 'Faculty, medical');
+  }
+  return row;
+}
+
+function mapAlumniSubject(row) {
+  var isAlumni = row.get('IsAlumni');
+  if (isAlumni == '1') {
+    row.put('alumni_subject', 'Medical colleges -- Alumni and alumnae');
+  }
+  return row;
+}
+
+function formatDate(date) {
+  // TODO: Return the formatted date.
+  try {
+    var to_format = new Date(date);
+    return to_format.toISOString();
+  }
+  catch (err) {
+    return false;
+  }
+}
+
+function formatEdrcdDate(row) {
+  var date = row.get('gradyear');
+  var formatted = formatDate(date);
+  if (formatted) {
+    row.put('formatted_edrcd_date', formatted);
+  }
+  return row;
+}
+  ]]></script>
+
+  <document name="archfac">
+    <entity name="person" transformer="script:mapFacultySubject,script:mapAlumniSubject,TemplateTransformer" query="
+SELECT people.* faculty.sa
+FROM people LEFT JOIN faculty ON people.akid = faculty.akid">
+      <field name="PID" template="nyumed-archfac-db:${person.akid}"/>
+      <field name="mods_titleInfo_title_ms" template="${people.Salutation} ${people.FirstName} ${people.MiddleName} ${people.LastName}, ${people.Credentials}"/>
+      <field name="mods_subject_topic_ms" template="${people.faculty_subject}"/>
+      <field name="mods_subject_topic_ms" template="${people.alumni_subject}"/>
+      <field name="mods_subject_topic_ms" template="${people.sa}"/>
+      <entity name="appoint" transformer="TemplateTransformer" query="
+SELECT *
+FROM appoint
+WHERE akid = '${person.akid}'
+">
+        <field name="mods_subject_topic_ms" column="subject"/>
+        <field name="mods_subject_topic_ms" column="rank"/>
+        <field name="mods_subject_name_corporate_ms" column="school"/>
+        <field name="mods_abstract_ms" template="${appoint.acadtitle} (${appoint.startdate}-${appoint.enddate});"/>
+      </entity>
+      <entity name="career" query="
+SELECT *
+FROM career
+WHERE akid = '${person.akid}'
+">
+        <field name="mods_subject_name_corporate_ms" column="institution"/>
+        <field name="mods_abstract_ms" template="${career.role} (${career.startdate}-${career.enddate});"/>
+      </entity>
+      <entity name="edrcd" transformer="script:formatEdrcdDate" query="
+SELECT *
+FROM edrcd
+WHERE akid = '${person.akid}'
+">
+        <field name="mods_subject_name_corporate_ms" column="institution"/>
+        <field name="mods_originInfo_dateCreated_mdt" column="formatted_edrcd_date"/>
+      </entity>
+    </entity>
+  </document>
+</dataConfig>
