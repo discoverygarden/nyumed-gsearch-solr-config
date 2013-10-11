@@ -22,62 +22,45 @@ function mapAlumniSubject(row) {
   }
   return row;
 }
-
-function formatDate(date) {
-  // TODO: Return the formatted date.
-  try {
-    var to_format = new Date(date);
-    return to_format.toISOString();
-  }
-  catch (err) {
-    return false;
-  }
-}
-
-function formatEdrcdDate(row) {
-  var date = row.get('gradyear');
-  var formatted = formatDate(date);
-  if (formatted) {
-    row.put('formatted_edrcd_date', formatted);
-  }
-  return row;
-}
   ]]></script>
 
   <document name="archfac">
-    <entity name="person" transformer="script:mapFacultySubject,script:mapAlumniSubject,TemplateTransformer" query="
-SELECT people.* faculty.sa
-FROM people LEFT JOIN faculty ON people.akid = faculty.akid">
-      <field name="PID" template="nyumed-archfac-db:${person.akid}"/>
-      <field name="mods_titleInfo_title_ms" template="${people.Salutation} ${people.FirstName} ${people.MiddleName} ${people.LastName}, ${people.Credentials}"/>
-      <field name="mods_subject_topic_ms" template="${people.faculty_subject}"/>
-      <field name="mods_subject_topic_ms" template="${people.alumni_subject}"/>
-      <field name="mods_subject_topic_ms" template="${people.sa}"/>
+    <entity name="person" pk="akid" transformer="script:mapFacultySubject,script:mapAlumniSubject,TemplateTransformer" query="
+SELECT people.*, faculty.sa
+FROM people LEFT JOIN faculty ON people.akid = faculty.akid
+WHERE '${dataimporter.request.clean}' != 'false'
+  OR people.Updated >= DATE('${dataimporter.last_index_time}')">
+      <field column="PID" template="nyumed-archfac-db:${person.akid}"/>
+      <field column="akid" name="archfac_akid_s"/>
+      <field column="mods_titleInfo_title_ms" template="${person.Salutation} ${person.FirstName} ${person.MiddleName} ${person.LastName}, ${person.Credentials}"/>
+      <field column="mods_subject_topic_ms" template="${person.faculty_subject}"/>
+      <field column="mods_subject_topic_ms" template="${person.alumni_subject}"/>
+      <field column="mods_subject_topic_ms" template="${person.sa}"/>
       <entity name="appoint" transformer="TemplateTransformer" query="
-SELECT *
+SELECT subject, rank, school, acadtitle, startdate, enddate
 FROM appoint
 WHERE akid = '${person.akid}'
 ">
         <field name="mods_subject_topic_ms" column="subject"/>
         <field name="mods_subject_topic_ms" column="rank"/>
         <field name="mods_subject_name_corporate_ms" column="school"/>
-        <field name="mods_abstract_ms" template="${appoint.acadtitle} (${appoint.startdate}-${appoint.enddate});"/>
+        <field column="mods_abstract_ms" template="${appoint.acadtitle} (${appoint.startdate}-${appoint.enddate})"/>
       </entity>
-      <entity name="career" query="
+      <entity name="career" transformer="TemplateTransformer" query="
 SELECT *
 FROM career
 WHERE akid = '${person.akid}'
 ">
         <field name="mods_subject_name_corporate_ms" column="institution"/>
-        <field name="mods_abstract_ms" template="${career.role} (${career.startdate}-${career.enddate});"/>
+        <field column="mods_abstract_ms" template="${career.role} (${career.startdate}-${career.enddate})"/>
       </entity>
-      <entity name="edrcd" transformer="script:formatEdrcdDate" query="
-SELECT *
+      <entity name="edrcd" query="
+SELECT institution, DATE_FORMAT(MAKEDATE(gradyear, 1), '%Y-%m-%dT%H:%i:%sZ') as formatted_grad_date
 FROM edrcd
 WHERE akid = '${person.akid}'
 ">
         <field name="mods_subject_name_corporate_ms" column="institution"/>
-        <field name="mods_originInfo_dateCreated_mdt" column="formatted_edrcd_date"/>
+        <field name="mods_originInfo_dateCreated_mdt" column="formatted_grad_date"/>
       </entity>
     </entity>
   </document>
