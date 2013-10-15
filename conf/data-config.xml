@@ -31,6 +31,7 @@ FROM people LEFT JOIN faculty ON people.akid = faculty.akid
 WHERE '${dataimporter.request.clean}' != 'false'
   OR people.Updated >= DATE('${dataimporter.last_index_time}')">
       <field column="PID" template="nyumed-archfac-db:${person.akid}"/>
+      <field column="RELS_EXT_hasModel_uri_ms" template="info:fedora/nyumed:archfacCModel"/>
       <field column="akid" name="archfac_akid_s"/>
       <field column="mods_titleInfo_title_ms" template="${person.Salutation} ${person.FirstName} ${person.MiddleName} ${person.LastName}, ${person.Credentials}"/>
       <field column="mods_subject_topic_ms" template="${person.faculty_subject}"/>
