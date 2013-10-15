@@ -1,0 +1,70 @@
+<dataConfig>
+  <dataSource
+    type="JdbcDataSource"
+    driver="com.mysql.jdbc.Driver"
+    url="jdbc:mysql://localhost/archfac"
+    user="root"
+    password="x21A63dV"
+  />
+  <script><![CDATA[
+function mapFacultySubject(row) {
+  var isFaculty = row.get('IsFaculty');
+  if (isFaculty == '1') {
+    row.put('faculty_subject', 'Faculty, medical');
+  }
+  return row;
+}
+
+function mapAlumniSubject(row) {
+  var isAlumni = row.get('IsAlumni');
+  if (isAlumni == '1') {
+    row.put('alumni_subject', 'Medical colleges -- Alumni and alumnae');
+  }
+  return row;
+}
+  ]]></script>
+
+  <document name="archfac">
+    <entity name="person" pk="akid" transformer="script:mapFacultySubject,script:mapAlumniSubject,TemplateTransformer" query="
+SELECT people.*, faculty.sa
+FROM people LEFT JOIN faculty ON people.akid = faculty.akid
+WHERE '${dataimporter.request.clean}' != 'false'
+  OR people.Updated >= DATE('${dataimporter.last_index_time}')">
+      <field column="PID" template="nyumed-archfac-db:${person.akid}"/>
+      <field column="RELS_EXT_hasModel_uri_ms" template="info:fedora/nyumed:archfacCModel"/>
+      <field column="akid" name="archfac_akid_s"/>
+      <field column="mods_titleInfo_title_ms" template="${person.Salutation} ${person.FirstName} ${person.MiddleName} ${person.LastName}, ${person.Credentials}"/>
+      <field column="mods_subject_topic_ms" template="${person.faculty_subject}"/>
+      <field column="mods_subject_topic_ms" template="${person.alumni_subject}"/>
+      <field column="mods_subject_topic_ms" template="${person.sa}"/>
+      <entity name="appoint" transformer="TemplateTransformer" query="
+SELECT subject, rank, school, acadtitle, startdate, enddate
+FROM appoint
+WHERE akid = '${person.akid}'
+ORDER BY startdate ASC
+">
+        <field name="mods_subject_topic_ms" column="subject"/>
+        <field name="mods_subject_topic_ms" column="rank"/>
+        <field name="mods_subject_name_corporate_ms" column="school"/>
+        <field column="mods_abstract_ms" template="${appoint.acadtitle} (${appoint.startdate}-${appoint.enddate})"/>
+      </entity>
+      <entity name="career" transformer="TemplateTransformer" query="
+SELECT *
+FROM career
+WHERE akid = '${person.akid}'
+ORDER BY start_date ASC
+">
+        <field name="mods_subject_name_corporate_ms" column="institution"/>
+        <field column="mods_abstract_ms" template="${career.role} (${career.start_date}-${career.end_date})"/>
+      </entity>
+      <entity name="edrcd" query="
+SELECT institution, DATE_FORMAT(MAKEDATE(gradyear, 1), '%Y-%m-%dT%H:%i:%sZ') as formatted_grad_date
+FROM edrcd
+WHERE akid = '${person.akid}'
+">
+        <field name="mods_subject_name_corporate_ms" column="institution"/>
+        <field name="mods_originInfo_dateCreated_mdt" column="formatted_grad_date"/>
+      </entity>
+    </entity>
+  </document>
+</dataConfig>
