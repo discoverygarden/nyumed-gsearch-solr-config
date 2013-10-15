@@ -41,6 +41,7 @@ WHERE '${dataimporter.request.clean}' != 'false'
 SELECT subject, rank, school, acadtitle, startdate, enddate
 FROM appoint
 WHERE akid = '${person.akid}'
+ORDER BY startdate ASC
 ">
         <field name="mods_subject_topic_ms" column="subject"/>
         <field name="mods_subject_topic_ms" column="rank"/>
@@ -51,9 +52,10 @@ WHERE akid = '${person.akid}'
 SELECT *
 FROM career
 WHERE akid = '${person.akid}'
+ORDER BY start_date ASC
 ">
         <field name="mods_subject_name_corporate_ms" column="institution"/>
-        <field column="mods_abstract_ms" template="${career.role} (${career.startdate}-${career.enddate})"/>
+        <field column="mods_abstract_ms" template="${career.role} (${career.start_date}-${career.end_date})"/>
       </entity>
       <entity name="edrcd" query="
 SELECT institution, DATE_FORMAT(MAKEDATE(gradyear, 1), '%Y-%m-%dT%H:%i:%sZ') as formatted_grad_date
