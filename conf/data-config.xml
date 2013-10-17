@@ -29,7 +29,8 @@ function mapAlumniSubject(row) {
 SELECT people.*, faculty.sa
 FROM people LEFT JOIN faculty ON people.akid = faculty.akid
 WHERE '${dataimporter.request.clean}' != 'false'
-  OR people.Updated >= DATE('${dataimporter.last_index_time}')">
+  OR people.Updated >= DATE('${dataimporter.last_index_time}')"
+  preImportDeleteQuery="PID:nyumed-archfac-db\:*">
       <field column="PID" template="nyumed-archfac-db:${person.akid}"/>
       <field column="RELS_EXT_hasModel_uri_ms" template="info:fedora/nyumed:archfacCModel"/>
       <field column="akid" name="archfac_akid_s"/>
