@@ -4,7 +4,7 @@
     driver="com.mysql.jdbc.Driver"
     url="jdbc:mysql://localhost/archfac"
     user="root"
-    password="x21A63dV"
+    password="islandora"
   />
   <script><![CDATA[
 function mapFacultySubject(row) {
