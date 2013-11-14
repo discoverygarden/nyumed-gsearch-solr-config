@@ -59,7 +59,7 @@
     <xsl:variable name="this_prefix">
       <xsl:value-of select="concat($prefix, local-name(), '_')"/>
       <xsl:if test="@type">
-        <xsl:value-of select="@type"/>
+        <xsl:value-of select="translate(@type,' ','_')"/>
         <xsl:text>_</xsl:text>
       </xsl:if>
     </xsl:variable>
