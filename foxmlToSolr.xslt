@@ -151,13 +151,11 @@
                Really, should probably only
                handle the mimetypes supported by the "getDatastreamText" call:
                https://github.com/fcrepo/gsearch/blob/master/FedoraGenericSearch/src/java/dk/defxws/fedoragsearch/server/TransformerToText.java#L185-L200
+               Karen Hanson 2014-06-19: this was previously attempting to run on all file types except images!
+                        pdfs specifically were randomly causing errors in indexing so changed it to only run on text MIMETYPES only.
+                        Probably a better solution, but this causing too many problems for now. FULL_TEXT datastream used instead.
           -->
-          <xsl:when test="@CONTROL_GROUP='M' and foxml:datastreamVersion[last() and not(starts-with(@MIMETYPE, 'image'))]">
-            <!-- TODO: should do something about mime type filtering
-              text/plain should use the getDatastreamText extension because document will only work for xml docs
-              xml files should use the document function
-              other mimetypes should not be being sent
-              will this let us not use the content variable? -->
+          <xsl:when test="@CONTROL_GROUP='M' and foxml:datastreamVersion[last() and starts-with(@MIMETYPE, 'text/')]">
             <xsl:apply-templates select="foxml:datastreamVersion[last()]">
               <xsl:with-param name="content" select="normalize-space(exts:getDatastreamText($PID, $REPOSITORYNAME, @ID, $FEDORASOAP, $FEDORAUSER, $FEDORAPASS, $TRUSTSTOREPATH, $TRUSTSTOREPASS))"/>
             </xsl:apply-templates>
